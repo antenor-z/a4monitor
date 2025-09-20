@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/style.css">
+
+    <title>A4 Monitor</title>
+</head>
+
+<body>
+    <content>
+        <h1>A4 Monitor</h1>
+        <p id="checkStatus">checking...</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="statusTable"></tbody>
+        </table>
+
+        <script>
+            async function loadStatus() {
+                checkStatus.innerText = "checking..."
+                const res = await fetch('/api/status')
+                const data = await res.json()
+                const tbody = document.getElementById('statusTable')
+                tbody.innerHTML = ""
+                data.results.forEach(item => {
+                    const row = document.createElement('tr')
+                    row.innerHTML = `<td>${item.name}</td><td>${item.status}</td>`
+                    tbody.appendChild(row)
+                })
+                checkStatus.innerText = data.allSystemsOk ? "All systems OK" : ""
+            }
+            loadStatus();
+            setInterval(loadStatus, 10000)
+        </script>
+    </content>
+</body>
+
+</html>
