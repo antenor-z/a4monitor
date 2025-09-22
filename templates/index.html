@@ -12,7 +12,7 @@
 <body>
     <content>
         <h1>A4 Monitor</h1>
-        <p id="checkStatus">checking...</p>
+        <p id="checkStatus" class="status-box green-box">checking...</p>
         <table>
             <thead>
                 <tr>
@@ -32,17 +32,24 @@
                 tbody.innerHTML = ""
                 data.results.forEach(item => {
                     const row = document.createElement('tr')
-		    let status = item.status
-		    if (status === "operational") {
+                    let status = item.status
+                    if (status === "operational") {
                         status = "<span class='operational-status'>operational</span>"
-		    }
-		    else {
-			status = `<span class='failed-status'>${status}</span>`
-		    }
-                    row.innerHTML = `<td>${item.name}</td><td>${status}</td>`
+                    }
+                    else {
+                        status = `<span class='failed-status'>${status}</span>`
+                    }
+                    row.innerHTML = `<td class="flexible">${item.name}</td><td class="fixed">${status}</td>`
                     tbody.appendChild(row)
                 })
-                checkStatus.innerText = data.allSystemsOk ? "All systems OK" : ""
+
+                if (data.allSystemsOk) {
+                    checkStatus.innerText = "All systems OK";
+                    checkStatus.className = "status-box green-box";
+                } else {
+                    checkStatus.innerText = "Some systems failed";
+                    checkStatus.className = "status-box red-box";
+                }
             }
             loadStatus();
             setInterval(loadStatus, 10000)
