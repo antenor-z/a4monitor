@@ -2,28 +2,50 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func check(c *gin.Context) {
+type resultsStruct struct {
+	AllSystemsOk bool     `json:"allSystemsOk"`
+	Results      []Result `json:"results"`
+}
+
+var results resultsStruct
+
+func checkProcess() {
 	configs, err := loadConfig("config.json")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		panic("no config.json")
 	}
-
-	var results []Result
-	allSystemsOk := true
+	results.AllSystemsOk = true
+	clear(results.Results)
 	for _, cfg := range configs {
 		status := runCheck(cfg.Cmd)
 		if status == 0 {
-			results = append(results, Result{Name: cfg.Name, Status: "operational"})
+			results.Results = append(results.Results, Result{Name: cfg.Name, Status: "operational"})
 		} else {
-			results = append(results, Result{Name: cfg.Name, Status: "failed"})
-			allSystemsOk = false
+			results.Results = append(results.Results, Result{Name: cfg.Name, Status: "failed"})
+			results.AllSystemsOk = false
 		}
 	}
+	print("**")
+}
 
-	c.JSON(http.StatusOK, gin.H{"allSystemsOk": allSystemsOk, "results": results})
+func CheckProcessTimer() {
+	timer := time.NewTicker(time.Second * 10)
+	defer timer.Stop()
+	for {
+		select {
+		case <-timer.C:
+			go func() {
+				checkProcess()
+			}()
+		}
+	}
+}
+
+func getStatus(c *gin.Context) {
+	c.JSON(http.StatusOK, results)
 }
