@@ -32,7 +32,14 @@
                 tbody.innerHTML = ""
                 data.results.forEach(item => {
                     const row = document.createElement('tr')
-                    row.innerHTML = `<td>${item.name}</td><td>${item.status}</td>`
+		    let status = item.status
+		    if (status === "operational") {
+                        status = "<span class='operational-status'>operational</span>"
+		    }
+		    else {
+			status = `<span class='failed-status'>${status}</span>`
+		    }
+                    row.innerHTML = `<td>${item.name}</td><td>${status}</td>`
                     tbody.appendChild(row)
                 })
                 checkStatus.innerText = data.allSystemsOk ? "All systems OK" : ""
