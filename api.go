@@ -14,35 +14,33 @@ type resultsStruct struct {
 
 var results resultsStruct
 
-func checkProcess() {
+func checkProcess(cfg *Config, results *resultsStruct) {
+	status := runCheck(cfg.Cmd)
+	if status == 0 {
+		results.Results = append(results.Results, Result{Name: cfg.Name, Status: "operational"})
+	} else {
+		results.Results = append(results.Results, Result{Name: cfg.Name, Status: "failed"})
+		results.AllSystemsOk = false
+	}
+}
+func checkProcesses() {
 	configs, err := loadConfig("config.json")
 	if err != nil {
 		panic("no config.json")
 	}
 	results.AllSystemsOk = true
-	clear(results.Results)
+	results.Results = nil
 	for _, cfg := range configs {
-		status := runCheck(cfg.Cmd)
-		if status == 0 {
-			results.Results = append(results.Results, Result{Name: cfg.Name, Status: "operational"})
-		} else {
-			results.Results = append(results.Results, Result{Name: cfg.Name, Status: "failed"})
-			results.AllSystemsOk = false
-		}
+		go checkProcess(&cfg, &results)
 	}
-	print("**")
 }
 
 func CheckProcessTimer() {
-	timer := time.NewTicker(time.Second * 10)
+	timer := time.NewTicker(10 * time.Second)
 	defer timer.Stop()
-	for {
-		select {
-		case <-timer.C:
-			go func() {
-				checkProcess()
-			}()
-		}
+
+	for range timer.C {
+		checkProcesses()
 	}
 }
 
