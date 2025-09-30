@@ -6,16 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Config struct {
-	Name string `json:"name"`
-	Cmd  string `json:"cmd"`
-}
-
-type Result struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-}
-
 func main() {
 	go CheckProcessTimer()
 	r := gin.Default()

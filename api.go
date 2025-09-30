@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,10 +13,23 @@ type resultsStruct struct {
 	AllSystemsOk bool     `json:"allSystemsOk"`
 	Results      []Result `json:"results"`
 }
+type ToBeMonitored struct {
+	Name string `json:"name"`
+	Cmd  string `json:"cmd"`
+}
+type Config struct {
+	Title         string          `json:"title"`
+	ToBeMonitored []ToBeMonitored `json:"monitor"`
+}
+
+type Result struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
 
 var results resultsStruct
 
-func checkProcess(cfg *Config, results *resultsStruct) {
+func checkProcess(cfg *ToBeMonitored, results *resultsStruct) {
 	status := runCheck(cfg.Cmd)
 	if status == 0 {
 		results.Results = append(results.Results, Result{Name: cfg.Name, Status: "operational"})
@@ -24,15 +39,18 @@ func checkProcess(cfg *Config, results *resultsStruct) {
 	}
 }
 func checkProcesses() {
-	configs, err := loadConfig("config.json")
+	config, err := loadConfig("config.json")
 	if err != nil {
 		panic("no config.json")
 	}
 	results.AllSystemsOk = true
 	results.Results = nil
-	for _, cfg := range configs {
+	for _, cfg := range config.ToBeMonitored {
 		go checkProcess(&cfg, &results)
 	}
+	slices.SortFunc(results.Results, func(a, b Result) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 }
 
 func CheckProcessTimer() {

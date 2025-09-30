@@ -6,16 +6,16 @@ import (
 	"os/exec"
 )
 
-func loadConfig(path string) ([]Config, error) {
+func loadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var configs []Config
-	if err := json.Unmarshal(data, &configs); err != nil {
+	var config Config
+	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
-	return configs, nil
+	return &config, nil
 }
 
 func runCheck(command string) int {
