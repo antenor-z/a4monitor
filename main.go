@@ -15,7 +15,7 @@ func main() {
 	r.GET("/api/status", getStatus)
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
+		c.HTML(http.StatusOK, "index.html", gin.H{"title": getTitle()})
 	})
 
 	r.Run(":5300")
