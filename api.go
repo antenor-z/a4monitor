@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,8 @@ type Result struct {
 
 var results resultsStruct
 
-func checkProcess(cfg *ToBeMonitored, results *resultsStruct) {
+func checkProcess(cfg *ToBeMonitored, results *resultsStruct, wg *sync.WaitGroup) {
+	defer wg.Done()
 	status := runCheck(cfg.Cmd)
 	if status == 0 {
 		results.Results = append(results.Results, Result{Name: cfg.Name, Status: "operational"})
@@ -38,7 +40,8 @@ func checkProcess(cfg *ToBeMonitored, results *resultsStruct) {
 		results.AllSystemsOk = false
 	}
 }
-func checkProcesses() {
+
+func checkProcesses(wg *sync.WaitGroup) {
 	config, err := loadConfig("config.json")
 	if err != nil {
 		panic("no config.json")
@@ -46,19 +49,22 @@ func checkProcesses() {
 	results.AllSystemsOk = true
 	results.Results = nil
 	for _, cfg := range config.ToBeMonitored {
-		go checkProcess(&cfg, &results)
+		wg.Add(1)
+		go checkProcess(&cfg, &results, wg)
 	}
+	wg.Wait()
 	slices.SortFunc(results.Results, func(a, b Result) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 }
 
 func CheckProcessTimer() {
+	var wg sync.WaitGroup
 	timer := time.NewTicker(10 * time.Second)
 	defer timer.Stop()
 
 	for range timer.C {
-		checkProcesses()
+		checkProcesses(&wg)
 	}
 }
 
